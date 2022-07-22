@@ -2,11 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../../db/connection');
 
-// get all employees
 
-// const showAllEmployees = function () {
-//     console.log ("entered showAllEmployees Function")
-// }
+
 router.get('/employees', (req, res) => {
 
     const sql = `SELECT * FROM employees`;
@@ -23,5 +20,5 @@ router.get('/employees', (req, res) => {
 });
 });
 
+
 module.exports = router;
-module.exports = showAllEmployees;
