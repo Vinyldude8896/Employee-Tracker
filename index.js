@@ -1,43 +1,40 @@
 // inporting inquirer and FSS functionality
 const inquirer = require('inquirer');
-const express = require('express');
 const db = require('./db/connection');
-const app = express();
 
 
 
-// Express middleware
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+function getEmployees () {
 
-// importing functions
-const getEmployees = require('./routes/apiRoutes/employees.js') ;
+    let sql = `SELECT employees.id, employees.first_name, employees.last_name, roles.title AS title, department.name as department, roles.salary AS salary, employees.manager_id AS manager 
+    FROM employees
+    LEFT JOIN roles
+    ON employees.role_id = roles.id
+    LEFT JOIN department
+    ON roles.department_id = department.id`;
 
-
-
-
-const addNewEmployee = ((first_name, last_name, role_id, res) => {
-
-    const sql = `INSERT INTO employees (first_name, last_name, role_id)
-    VALUES (?,?,?)`
-
-    const params = [first_name, last_name, role_id];
-    console.log("the  params are:" + params);
-
-    db.query(sql, params, (err, result) => 
+    db.query(sql, (err, res) => 
         {
             if (err) {
-                res.status(500).json({error: err.message});
+                console.log(err);
                 return;
             }
-    console.table(params)
+        console.table(res);
+        showOrAddData();
         });
-     showOrAddData();
-    });
+    }
 
+// function to update Employee's role
+
+
+
+// Function that will get new employee information
+// prompts user for employee's first name, last name 
+// does an SQL query to provide user with the choices of current roles
+// does an SQL query to provide user with options of current employees who may be their manager
 function getNewEmployeeInfo (){
 
-    return inquirer.prompt([
+    inquirer.prompt([
 
         // Prompt User for information about new employee
         {
@@ -50,39 +47,67 @@ function getNewEmployeeInfo (){
             name: 'last_name',
             message: 'What is the their last name?',
         }, 
+    ])
+    // then store first name and last name 
+    // do an sql query to find all current roles
+    .then(answer => {
+    const criteria = [answer.first_name, answer.last_name]
+    const roleSql = `SELECT roles.id, roles.title FROM roles`;
+    db.query(roleSql, (err, result) =>{
+        const roles = result.map(({id, title}) => ({name: title, value:id}));
+    // prompt user for what role the employee has given the results from the SQL query
+        inquirer.prompt([
         {
-            type: 'checkbox',
+            type: 'list',
             name: 'role',
-            message: 'What is their role?',
-            choices: ["Sales Lead", "Salesperson", "Software Engineer", "Account Manager", "Accountant", "Legal Team Lead", "Lawyer"],
+            message: "What is the employee's role?",
+            choices: roles
 
         },
-    ])
-        // Then checking the value of the input to call other functions
-    .then ( data => {
-        console.log(data);
-        const role = JSON.stringify(data.role);
-        let role_id = 0;
-        if (role === '["Sales Lead"]'){
-           role_id = 1;
-        } else if (role === '["Salesperson"]'){
-            role_id = 2;
-        } else if (role === '["Software Engineer"]'){
-            role_id = 3;
-        } else if (role === '["Account Manager"]'){
-            role_id = 4;
-        } else if (role === '["Accountant"]'){
-            role_id = 5;
-        } else if (role === '["Legal Team Lead"]'){
-            role_id = 6;
-        } else if (role === '["Lawyer"]'){
-            role_id = 7;
-        } 
-        console.log("The role_id is now" + role_id)
-        addNewEmployee(data.first_name, data.last_name, role_id); 
-    })
+       ])      
+    // Then storing the role and pushing data into criteria for employee
+    // then sensing SQL query to find all employee names and their IDs
+    // and offering those employee names as possible managers for the new employee
+    .then ( rolechoice  => {
+        const role = rolechoice.role;
+        criteria.push(role);
+        const managerSQL = `SELECT * FROM employees`;
+        db.query(managerSQL, (err, data) => {
+            const managers = data.map(({id, first_name, last_name}) => ({name: first_name + " " + last_name, value:id}));
+        inquirer.prompt([
+            {
+            type: 'list',
+            name: 'manager',
+            message: "Who is the employee's manager?",
+            choices: managers
+            }
+        ])
+        // then storing the choice and pushing to the employee criteria 
+        // doing another SQL query to insert all of the user information into
+        // the employees database
+        .then (managerChoice => {
+            const manager = managerChoice.manager;
+            criteria.push(manager);
+            const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id)
+            VALUES (?,?,?,?)`
+            db.query(sql, criteria, (err, result) => 
+                {
+                    if (err) {
+                        res.status(500).json({error: err.message});
+                        return;
+                    }
+            console.log("You have added the new employee");
+            getEmployees()
+            showOrAddData();
+        });
+        });
+    });
+});
+});
+});
 }
-
+// function to validate the choice of the main menu each time it is displayed
+// then will call on appropriate function based on what the choice is equal to
 
 function validateChoice(choice) {
     if(choice === '["View All Employees"]') {
@@ -93,7 +118,10 @@ function validateChoice(choice) {
         console.log("You chose to add an employee");
         getNewEmployeeInfo();
         return;
-    } 
+    } else if (choice === '["Update Employee Role"]'){
+        console.log("You have chosen to update an employee's role");
+        updateEmployeeRole();
+    }
     
     
     
@@ -128,4 +156,4 @@ function showOrAddData () {
     })
 }
 
-module.exports = showOrAddData;
+showOrAddData()
