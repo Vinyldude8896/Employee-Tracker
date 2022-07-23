@@ -1,10 +1,12 @@
-// inporting inquirer and FSS functionality
+// inporting inquirer and FS functionality
 const res = require('express/lib/response');
 const inquirer = require('inquirer');
 const db = require('./db/connection');
 
 
 // function to get all employees 
+// will query the SQL database and return employee's first name, last name, role , department and salary and manager ID
+// employee table is joined to roles table and department table
 function getEmployees () {
 
     let sql = `SELECT employees.id AS ID, employees.first_name AS First_Name, employees.last_name AS Last_Name, roles.title AS Role, department.name AS Department, roles.salary AS Salary, employees.manager_id AS Manager 
@@ -27,6 +29,7 @@ function getEmployees () {
 
 // function to view all roles
 // will query the SQL database and return a table with roles ID, Role title, department name and salary for role
+// roles table is joined to department table
 function viewAllRoles (){
     let sqlViewRoles = `SELECT roles.id AS Id, roles.title AS Role, department.name AS department, roles.salary AS Salary
                 FROM roles
@@ -42,7 +45,9 @@ function viewAllRoles (){
     });
 }
 
-// function to add role
+// function to add role that will prompt the user for the role they wish to add and the salary for that role
+// the sends the mySQL database a query to select all departments and sends that as a coice to the user to input the department for teh role
+//then the information is gatheed into criteria array and is sent to the database as an 'Insert Into' query
 function addRole () {
     inquirer.prompt([
         {
@@ -91,7 +96,51 @@ function addRole () {
     
 }
 
+// Function to view all departments
+// queries the SQL database to return department id and department name
+// and return them in a table
+
+function ViewAllDepartments() {
+    const sqlViewDepartments = `SELECT department.id AS ID, department.name as Department FROM department`;
+
+    db.query(sqlViewDepartments, (err, results) =>{
+        if (err) {
+            console.log(err);
+            return;
+        }
+        console.table(results);
+        showOrAddData();
+    })
+}
+
+// function to add department
+
+function AddDepartment() {
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'department',
+            message: "Please Enter the name of the Department you want to add"
+        },
+    ])
+    .then(departmentChoice => {
+        const criteria =[departmentChoice.department];
+        const departmentAddSql = 'INSERT INTO department (name) VALUES(?)'
+        db.query(departmentAddSql, criteria, (err, result) =>{
+            if(err) {
+                res.status(500).json({error: err.message});
+                return;
+            }
+            console.log("You have added a new department");
+            ViewAllDepartments()
+        });
+    });
+};
+
 // function to update Employee's role
+// will query the database and send teh user back a list of current employees to choose the one they wish to update
+// then another query is send to the databse to gather all existing roles and present them to the user to choose what the employee's new role is
+//then another query is sent to the database to update the cosen employee using the criteria in the array and the 'Update employees' database query
 
 function updateEmployeeRole() {
     const employeeSQL = `SELECT * FROM employees`;
@@ -107,7 +156,6 @@ function updateEmployeeRole() {
         ])
         .then (employeeChoice =>{
             const criteria = [employeeChoice.employee];
-            console.log(criteria);
             const rolesSql = `SELECT roles.id, roles.title FROM roles`;
             db.query(rolesSql, (err, result) => {
                 const roles = result.map(({id, title}) => ({name: title, value:id}));
@@ -123,7 +171,6 @@ function updateEmployeeRole() {
                     const role = roleChoice.role;
                     criteria.push(role);
                     const criteriaReverse = criteria.reverse();
-                    console.log("The update role criteria is" + criteriaReverse); 
                     const changeroleSql = `UPDATE employees SET role_id = ? WHERE id = ?`;
                     db.query(changeroleSql, criteriaReverse, (err, result) =>
                     {
@@ -150,8 +197,6 @@ function updateEmployeeRole() {
 function getNewEmployeeInfo (){
 
     inquirer.prompt([
-
-        // Prompt User for information about new employee
         {
             type: 'input',
             name: 'first_name',
@@ -163,14 +208,11 @@ function getNewEmployeeInfo (){
             message: 'What is the their last name?',
         }, 
     ])
-    // then store first name and last name 
-    // do an sql query to find all current roles
     .then(answer => {
     const criteria = [answer.first_name, answer.last_name]
     const roleSql = `SELECT roles.id, roles.title FROM roles`;
     db.query(roleSql, (err, result) =>{
         const roles = result.map(({id, title}) => ({name: title, value:id}));
-    // prompt user for what role the employee has given the results from the SQL query
         inquirer.prompt([
         {
             type: 'list',
@@ -180,9 +222,6 @@ function getNewEmployeeInfo (){
 
         },
        ])      
-    // Then storing the role and pushing data into criteria for employee
-    // then sensing SQL query to find all employee names and their IDs
-    // and offering those employee names as possible managers for the new employee
     .then ( rolechoice  => {
         const role = rolechoice.role;
         criteria.push(role);
@@ -197,9 +236,6 @@ function getNewEmployeeInfo (){
             choices: managers
             }
         ])
-        // then storing the choice and pushing to the employee criteria 
-        // doing another SQL query to insert all of the user information into
-        // the employees database
         .then (managerChoice => {
             const manager = managerChoice.manager;
             criteria.push(manager);
@@ -213,7 +249,6 @@ function getNewEmployeeInfo (){
                     }
             console.log("You have added the new employee");
             getEmployees()
-            showOrAddData();
         });
         });
     });
@@ -243,24 +278,24 @@ function validateChoice(choice) {
     } else if (choice === '["Add Role"]'){
         console.log("You have chosen to view add a role");
         addRole();
-    }
-    
-    
-    
-    else if (choice === '["Quit"]') {
+    } else if (choice === '["View All Departments"]'){
+        console.log("You have chosen to view add all departments");
+        ViewAllDepartments();
+    } else if (choice === '["Add Department"]'){
+        console.log("You have chosen to view add a departments");
+        AddDepartment();
+    } else if (choice === '["Quit"]') {
         console.log("Have a good day!");
-       return;
+        process.exit();
     }
 
 }
 
-
+// this is the intial prompt to the user asking them what they would like to do
+// the result is then sent to the validateChoice function to be checked and then the apprpriate function is called
 function showOrAddData () {
     return inquirer.prompt([
 
-        // Initial Prompt to user to ask if they want to view departments, employees, roles,
-        // add employee, role or department
-        // or quit
         {
             type: 'checkbox',
             name: 'choice',
@@ -270,7 +305,6 @@ function showOrAddData () {
         },
 
     ])
-        // Then checking the value of the input to call other functions
     .then (data =>{
         const choice = JSON.stringify(data.choice);
         validateChoice(choice)
