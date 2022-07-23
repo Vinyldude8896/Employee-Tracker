@@ -91,9 +91,36 @@ function addRole () {
                 })
             })
         })
-    })
+    })  
+}
+
+// function to delete role
  
-    
+function deleteRole() {
+    const roleSQL = `SELECT roles.id, roles.title FROM roles`;
+    db.query(roleSQL, (err, result) =>{
+        const roles = result.map(({id, title}) => ({name: title, value:id}));
+        inquirer.prompt([
+        {
+            type: 'list',
+            name: 'role',
+            message: "Which Role would you like to delete?",
+            choices: roles
+        }
+        ])
+        .then (roleChoice =>{
+            const criteria = [roleChoice.role];
+            const deleteRole = `DELETE FROM roles WHERE roles.id = ?`;
+            db.query(deleteRole, criteria, (err, result) =>{
+                if(err) {
+                    res.status(500).json({error: err.message});
+                    return;
+                }
+                console.log("You have deleted that role");
+                viewAllRoles()
+            })
+        })
+    })
 }
 
 // Function to view all departments
@@ -113,7 +140,9 @@ function ViewAllDepartments() {
     })
 }
 
-// function to add department
+// function to add department will query the database and give the user a list of employees that they can choose from
+// when the user chooses and employee from the list
+// another query will be sent to the dabase to delete that record
 
 function AddDepartment() {
     inquirer.prompt([
@@ -136,6 +165,38 @@ function AddDepartment() {
         });
     });
 };
+
+//function to delete department 
+// will query the database for all departments and then provide them as a list of options to the user
+// when the user selects an department and a call to 'DELETE FROM' table is made with the department id
+function deleteDepartment() {
+    const departmentSql = `SELECT * FROM department`;
+    db.query(departmentSql, (err, data) => {
+    const departments = data.map(({id, name}) =>({name: name, value:name}));
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'department',
+            message: "Which Department would you like to delete?",
+            choices: departments
+        }
+    ])
+    .then (departmentChoice => {
+        const criteria = [departmentChoice.department];
+        console.log(criteria)
+        const deleteDepartmentSql = `DELETE FROM department WHERE department.name = ?`;
+        db.query(deleteDepartmentSql, criteria, (err, result) => {
+            if(err) {
+                res.status(500).json({error: err.message});
+                return;
+            }
+            console.log("You have deleted that department.");
+            ViewAllDepartments();
+           })
+        })
+    })
+}
+
 
 // function to update Employee's role
 // will query the database and send teh user back a list of current employees to choose the one they wish to update
@@ -256,6 +317,38 @@ function getNewEmployeeInfo (){
 });
 });
 }
+
+//function to delete employee 
+// will query the database for all employees and then provide them as a list of options to the user
+// when the user selects an employee a call to 'DELETE FROM' table is made with the employee id
+function deleteEmployee() {
+    const employeeSQL = 'SELECT * FROM employees';
+    db.query(employeeSQL, (err, data) =>{
+        const employees = data.map(({id, first_name, last_name}) =>({name: first_name + " " + last_name, value:id}));
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: "Which employee would you like to delete?",
+                choices: employees
+            },
+        ])
+        .then (employeeChoice => {
+            const criteria = [employeeChoice.employee];
+            console.log(criteria);
+            const deleteEmployeeSql = `DELETE FROM employees WHERE employees.id = ?`;
+            db.query(deleteEmployeeSql, criteria, (err, result) => {
+                if(err) {
+                    res.status(500).json({error: err.message});
+                    return;
+                }
+                console.log("You have deleted that employee.");
+                getEmployees()
+            })
+        })
+    })
+}
+
 // function to validate the choice of the main menu each time it is displayed
 // then will call on appropriate function based on what the choice is equal to
 
@@ -263,27 +356,32 @@ function validateChoice(choice) {
     if(choice === '["View All Employees"]') {
         console.log("You chose to show all employees");
         getEmployees();
-        return;
     }  else if (choice === '["Add Employee"]') {
         console.log("You chose to add an employee");
         getNewEmployeeInfo();
-        return;
+    } else if (choice === '["Delete Employee"]') {
+        console.log("You have chosen to delete an employee");
+        deleteEmployee();
     } else if (choice === '["Update Employee Role"]'){
         console.log("You have chosen to update an employee's role");
         updateEmployeeRole();
-        return;
     } else if (choice === '["View All Roles"]'){
         console.log("You have chosen to view all roles");
         viewAllRoles();
     } else if (choice === '["Add Role"]'){
         console.log("You have chosen to view add a role");
         addRole();
+    } else if (choice === '["Delete Role"]'){
+        console.log("You have chosen to delete role");
+        deleteRole();
     } else if (choice === '["View All Departments"]'){
         console.log("You have chosen to view add all departments");
         ViewAllDepartments();
     } else if (choice === '["Add Department"]'){
         console.log("You have chosen to view add a departments");
         AddDepartment();
+    } else if (choice === '["Delete Department"]'){
+        deleteDepartment();
     } else if (choice === '["Quit"]') {
         console.log("Have a good day!");
         process.exit();
@@ -300,7 +398,7 @@ function showOrAddData () {
             type: 'checkbox',
             name: 'choice',
             message: 'What would you like to do?',
-            choices: ["View All Employees", "Add Employee", "Update Employee Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "Quit"],
+            choices: ["View All Employees", "Add Employee", "Delete Employee", "Update Employee Role", "View All Roles", "Add Role", "Delete Role", "View All Departments", "Add Department", "Delete Department","Quit"],
 
         },
 
