@@ -8,8 +8,7 @@
 ![Node.js](https://img.shields.io/badge/Nodejs-License-blue)
 ![JavaScript](https://img.shields.io/badge/JavaScript-License-yellowgreen)
 ![mySQL](https://img.shields.io/badge/mySQL-License-lightgrey)
-![Express.js](https://img.shields.io/badge/Express.js-License-yellowgreen)
-![Node.js](https://img.shields.io/badge/Nodejs-License-blue)
+
 ## Table of Contents
 
 - [installation](#installation)
