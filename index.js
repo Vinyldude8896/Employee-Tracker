@@ -6,7 +6,7 @@ const db = require('./db/connection');
 
 function getEmployees () {
 
-    let sql = `SELECT employees.id, employees.first_name, employees.last_name, roles.title AS title, department.name as department, roles.salary AS salary, employees.manager_id AS manager 
+    let sql = `SELECT employees.id AS ID, employees.first_name AS First_Name, employees.last_name AS Last_Name, roles.title AS Role, department.name AS Department, roles.salary AS Salary, employees.manager_id AS Manager 
     FROM employees
     LEFT JOIN roles
     ON employees.role_id = roles.id
@@ -26,7 +26,55 @@ function getEmployees () {
 
 // function to update Employee's role
 
+function updateEmployeeRole() {
+    const employeeSQL = `SELECT * FROM employees`;
+    db.query(employeeSQL, (err, data) =>{
+        const employees = data.map(({id, first_name, last_name}) =>({name: first_name + " " + last_name, value:id}));
+        inquirer.prompt([
+            {
+                type:'list',
+                name: 'employee',
+                message: "Which employee's role would you like to change?",
+                choices: employees
+            }
+        ])
+        .then (employeeChoice =>{
+            const criteria = [employeeChoice.employee];
+            console.log(criteria);
+            const rolesSql = `SELECT roles.id, roles.title FROM roles`;
+            db.query(rolesSql, (err, result) => {
+                const roles = result.map(({id, title}) => ({name: title, value:id}));
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: "What is the employee's new role?",
+                        choices: roles
+                    },
+                ])
+                .then (roleChoice =>{
+                    const role = roleChoice.role;
+                    criteria.push(role);
+                    const criteriaReverse = criteria.reverse();
+                    console.log("The update role criteria is" + criteriaReverse); 
+                    const changeroleSql = `UPDATE employees SET role_id = ? WHERE id = ?`;
+                    db.query(changeroleSql, criteriaReverse, (err, result) =>
+                    {
+                        if (err) {
+                            res.status(500).json({error: err.message});
+                            return;
+                        }
+                console.log("You have updated the employee's role");
+                getEmployees()
+                    }) 
+                })
+            })
 
+            
+        })
+    })
+
+}
 
 // Function that will get new employee information
 // prompts user for employee's first name, last name 
