@@ -1,9 +1,10 @@
 // inporting inquirer and FSS functionality
+const res = require('express/lib/response');
 const inquirer = require('inquirer');
 const db = require('./db/connection');
 
 
-
+// function to get all employees 
 function getEmployees () {
 
     let sql = `SELECT employees.id AS ID, employees.first_name AS First_Name, employees.last_name AS Last_Name, roles.title AS Role, department.name AS Department, roles.salary AS Salary, employees.manager_id AS Manager 
@@ -23,6 +24,72 @@ function getEmployees () {
         showOrAddData();
         });
     }
+
+// function to view all roles
+// will query the SQL database and return a table with roles ID, Role title, department name and salary for role
+function viewAllRoles (){
+    let sqlViewRoles = `SELECT roles.id AS Id, roles.title AS Role, department.name AS department, roles.salary AS Salary
+                FROM roles
+                LEFT JOIN department
+                ON roles.department_id = department.id `;
+    db.query(sqlViewRoles, (err, res) => {
+        if (err) {
+            console.log(err);
+            return;
+        } 
+        console.table(res);
+        showOrAddData();
+    });
+}
+
+// function to add role
+function addRole () {
+    inquirer.prompt([
+        {
+            type:'input',
+            name: 'role',
+            message: 'Please enter the role you wish to add :',
+        },
+        {
+            type: 'input',
+            name: 'salary',
+            message: "Please enter the salary for the role (ie: 125000) :",
+        }
+    ])
+    .then(roleChoice => {
+        const criteria = [roleChoice.role, roleChoice.salary];
+        const departmentSql ='SELECT department.id, department.name FROM department';
+        db.query(departmentSql, (err, result)=>{
+            const departments = result.map(({id, name}) =>({name: name, value:id}));
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'department',
+                    message: "In which department does this role belong?",
+                    choices: departments
+                }
+            ])
+            .then (roleChoice => {
+                const role = roleChoice.department;
+                criteria.push(role);
+                console.log(criteria);
+                const departmentSql = `INSERT INTO roles (title, salary, department_id)
+                VALUES (?,?,?)`
+                db.query(departmentSql, criteria, (err, result) =>{
+                    if(err) {
+                        res.status(500).json({error: err.message});
+                        return;
+                    }
+                console.log("You have added a new role.")
+                viewAllRoles()
+                showOrAddData;
+                })
+            })
+        })
+    })
+ 
+    
+}
 
 // function to update Employee's role
 
@@ -169,6 +236,13 @@ function validateChoice(choice) {
     } else if (choice === '["Update Employee Role"]'){
         console.log("You have chosen to update an employee's role");
         updateEmployeeRole();
+        return;
+    } else if (choice === '["View All Roles"]'){
+        console.log("You have chosen to view all roles");
+        viewAllRoles();
+    } else if (choice === '["Add Role"]'){
+        console.log("You have chosen to view add a role");
+        addRole();
     }
     
     
