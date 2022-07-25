@@ -27,6 +27,45 @@ function getEmployees () {
         });
     }
 
+// Function to get all employees based on the department chosen by the user
+// will select all departments and provide the user what department they want to choose
+// then will query the sql databse to serach for employees based on what department they selected
+
+function getEmployeesByDepartment() {
+    const departmentChoice = `Select * FROM department`;
+    db.query(departmentChoice, (err, result) =>{
+        const departments = result.map(({id, name}) =>({name: name, value:id}));
+        console.log(departments);
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'department',
+                message: "From which department do you want to see the employees? ",
+                choices: departments
+            },
+        ])
+        .then (departmentChoice => {
+            const criteria = [departmentChoice.department];
+            const employeeSearchSql = `SELECT employees.first_name, employees.last_name, 
+            department.name AS Department
+            FROM employees
+            LEFT JOIN roles ON employees.role_id = roles.id 
+            LEFT JOIN department ON roles.department_id = department.id
+            WHERE department.id = ?`;
+
+            db.query(employeeSearchSql, criteria, (err, result) => {
+                if (err) {
+                    res.status(500).json({error: err.message});
+                    return;
+                }
+            console.log("These are the employees by department you requested");
+            console.table(result);
+            showOrAddData();
+            })
+        })
+    })
+}
+
 // function to view all roles
 // will query the SQL database and return a table with roles ID, Role title, department name and salary for role
 // roles table is joined to department table
@@ -94,7 +133,10 @@ function addRole () {
     })  
 }
 
-// function to delete role
+// Function to delete a role
+// queries the SQL database to return roles id and role titles
+// and return them as a choice for the user to pick which one to delete
+// then a SQL query is sent to delete the chosen role
  
 function deleteRole() {
     const roleSQL = `SELECT roles.id, roles.title FROM roles`;
@@ -356,7 +398,11 @@ function validateChoice(choice) {
     if(choice === '["View All Employees"]') {
         console.log("You chose to show all employees");
         getEmployees();
-    }  else if (choice === '["Add Employee"]') {
+    } else if (choice === '["View Employees by Department"]'){
+        console.log("You chose to view employees by department");
+        getEmployeesByDepartment();
+    }  
+    else if (choice === '["Add Employee"]') {
         console.log("You chose to add an employee");
         getNewEmployeeInfo();
     } else if (choice === '["Delete Employee"]') {
@@ -398,7 +444,7 @@ function showOrAddData () {
             type: 'checkbox',
             name: 'choice',
             message: 'What would you like to do?',
-            choices: ["View All Employees", "Add Employee", "Delete Employee", "Update Employee Role", "View All Roles", "Add Role", "Delete Role", "View All Departments", "Add Department", "Delete Department","Quit"],
+            choices: ["View All Employees", "View Employees by Department", "Add Employee", "Delete Employee", "Update Employee Role", "View All Roles", "Add Role", "Delete Role", "View All Departments", "Add Department", "Delete Department","Quit"],
 
         },
 
