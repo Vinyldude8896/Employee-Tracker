@@ -1,7 +1,7 @@
 # Employee-Tracker
 
 ### This app will be used as a an employee tracker tool. This uses a node.js command line interface with express.js and mysql.
-### You can view all employees, add an employee, update an employee's role, delete and employee, view all roles, add a role, delete a role, view all departments, add a department or delete a department.
+### You can view all employees, view employees by department, add an employee, update an employee's role, delete and employee, view all roles, add a role, delete a role, view all departments, add a department or delete a department.
 
 
 ### badges
