@@ -35,7 +35,6 @@ function getEmployeesByDepartment() {
     const departmentChoice = `Select * FROM department`;
     db.query(departmentChoice, (err, result) =>{
         const departments = result.map(({id, name}) =>({name: name, value:id}));
-        console.log(departments);
         inquirer.prompt([
             {
                 type: 'list',
@@ -116,7 +115,6 @@ function addRole () {
             .then (roleChoice => {
                 const role = roleChoice.department;
                 criteria.push(role);
-                console.log(criteria);
                 const departmentSql = `INSERT INTO roles (title, salary, department_id)
                 VALUES (?,?,?)`
                 db.query(departmentSql, criteria, (err, result) =>{
@@ -225,7 +223,6 @@ function deleteDepartment() {
     ])
     .then (departmentChoice => {
         const criteria = [departmentChoice.department];
-        console.log(criteria)
         const deleteDepartmentSql = `DELETE FROM department WHERE department.name = ?`;
         db.query(deleteDepartmentSql, criteria, (err, result) => {
             if(err) {
@@ -377,7 +374,6 @@ function deleteEmployee() {
         ])
         .then (employeeChoice => {
             const criteria = [employeeChoice.employee];
-            console.log(criteria);
             const deleteEmployeeSql = `DELETE FROM employees WHERE employees.id = ?`;
             db.query(deleteEmployeeSql, criteria, (err, result) => {
                 if(err) {
