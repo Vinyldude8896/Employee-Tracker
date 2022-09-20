@@ -1,7 +1,20 @@
 # Employee-Tracker
 
-### This app will be used as a an employee tracker tool. This uses a node.js command line interface with express.js and mysql.
-### You can view all employees, view employees by department, add an employee, update an employee's role, delete and employee, view all roles, add a role, delete a role, view all departments, add a department or delete a department.
+### User Story
+As a user I need a command line application that will keep track of my company and it's employees. By answer command prompt questions I would like to be able to view my departments, my employees and their roles. As a user I also want the ability to Create a new Department, or Delete a department. As a user I would also like the ability to update a role that an employee has. As a user I would also like to be able to add or delete an employee. When I ask to add an employee, I should be prompted to enter the employee's Name and department and their role. Then when I view employees it should return their name, ID, Role, Department and salary as well as the ID of their manager.
+### Features
+This app features a command line interface that interacts with the user.
+This app will prompt the user with a menu to :
+View all employees
+Add an Employee
+Delete an Employee
+Update Employee Role
+View All Roles
+Add a Role
+View All departments
+Add a Department
+Delete a Department
+When a user inputs the requested data the appropriate CRUD(Create, Read, Update or Delete) action is applied to the databse.
 
 
 ### badges
@@ -18,14 +31,26 @@
 - [Questions](#questions)
 
 ### Installation
-You can use the following by cloning the github repository and running the program from the command line using node.js
-
+1. Please clone the github repo here :
+https://github.com/Vinyldude8896/Employee-Tracker
+2. Run npm install to install the dependecies.
+3. Then at the root folder, run npm start 
+4. and go to: http://localhost:3000/#home
+5. Test the app by going through the menu to Create, Update, Read or Delete Data
 
 
 ### Contribution Guidelines
-N/A as of yet
+Current contributers:
+Kevin Reid : https://github.com/Vinyldude8896 <br />
+
 ### Testing
-Multiple days were spent testing to ensure proper data was being written to the JSON file and retrieved properly.
+1. Please clone the github repo here :
+https://github.com/Vinyldude8896/Employee-Tracker
+2. Run npm install to install the dependecies.
+3. Then at the root folder, run npm start 
+4. and go to: http://localhost:3000/#home
+5. Test the app by going through the menu to Create, Update, Read or Delete Data
+
 ### Questions
     email address : kevinnivek@me.com
     - additional instructions 
